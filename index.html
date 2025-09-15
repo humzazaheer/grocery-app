@@ -1,11 +1,283 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-mdb-theme="light">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grocery App</title>
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet" />
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400,500,700&display=swap" rel="stylesheet" />
+  <!-- MDB -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.2.0/mdb.min.css" rel="stylesheet" />
+
+  <style>
+    .container {
+      max-width: 700px;
+    }
+  </style>
 </head>
+
 <body>
-    
+
+  <div class="container mt-4">
+    <div class="sticky-top pt-2">
+      <div class="card">
+        <div class="card-header bg-primary text-white py-3 d-flex align-items-center gap-2 justify-content-between">
+          <h4 class="mb-0">Grocery App</h4>
+          <button title="Toggle theme" id="toggleTheme" class="btn bg-transparent btn-link text-white"
+            data-mdb-ripple-init><i class="fa fa-moon fa-xl"></i></button>
+        </div>
+        <div class="card-body">
+          <form id="groceryForm">
+            <div class="input-group">
+              <div class="form-outline" data-mdb-input-init>
+                <input type="text" id="itemName" name="itemName" class="form-control" required
+                  onkeyup="renderSuggestions(this.value)" />
+                <label class="form-label" for="itemName">Item</label>
+              </div>
+              <input type="hidden" name="itemQuantity" value="1">
+              <button title="Add item" type="submit" id="addItemBtn" class="btn btn-primary" data-mdb-ripple-init>
+                <i class="fas fa-plus fa-xl"></i>
+              </button>
+              <ul class="dropdown-menu show w-100" id="suggestions"></ul>
+            </div>
+
+          </form>
+        </div>
+        <div class="card-footer">
+          <div class="d-flex justify-content-between gap-3">
+            <p class="mb-0 me-5 d-flex align-items-center">
+              <span class="small text-muted me-2">Total Items:</span> <span class="small fw-normal"
+                id="totalItems">0</span>
+            </p>
+            <p class="mb-0 me-5 d-flex align-items-center">
+              <span class="small text-muted me-2">Total Quantity:</span> <span class="small fw-normal"
+                id="totalQuantity">0</span>
+            </p>
+            <button class="btn btn-danger d-none" id="clearList" onclick="clearList()"
+              data-mdb-ripple-init>Clear list</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="groceryItemsList" class="mt-4">
+      <!-- List items will be rendered here -->
+      <div class="card">
+        <div class="card-body p-4">
+          <p class="lead mb-0 text-center">No item found</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="alertContainer" class="alert-fixed"
+    style="width: 450px;bottom: 10px;right: 10px;top: unset;left: unset;transform: unset;"></div>
+
+  <!-- javascript -->
+  <script>
+
+    var groceryForm = document.getElementById('groceryForm');
+    var groceryItemsList = document.getElementById('groceryItemsList');
+    var totalQuantity = document.getElementById('totalQuantity');
+    var totalItems = document.getElementById('totalItems');
+    var suggestionsList = document.getElementById('suggestions');
+
+
+    var itemsList = [];
+
+    // form submit event
+
+    groceryForm.addEventListener('submit', e => {
+      e.preventDefault();
+      var form = new FormData(groceryForm);
+      var formData = Object.fromEntries(form);
+      var dataExisted = itemsList.find(item => item.itemName == formData.itemName);
+      if (dataExisted) {
+        dataExisted.itemQuantity = parseInt(dataExisted.itemQuantity) + parseInt(formData.itemQuantity);
+        showAlert('Item already existed. Quantity updated successfully', 'info');
+      }
+      else {
+        itemsList = [...itemsList, formData];
+        showAlert('Item added successfully', 'success');
+      }
+
+      renderData();
+      groceryForm.reset();
+      suggestionsList.innerHTML = '';
+      clearAlert();
+    });
+
+    // render suggestions
+
+    const renderSuggestions = (query) => {
+      suggestionsList.innerHTML = '';
+
+      if (query !== '') {
+        var suggestions = itemsList.filter(item => item.itemName.toLowerCase().includes(query.toLowerCase()))
+        suggestions.length > 0 &&
+          suggestions.forEach(suggestion => {
+            var li = document.createElement('li');
+            li.className = 'dropdown-item';
+            li.innerText = suggestion.itemName;
+            li.addEventListener('click', () => {
+              document.getElementById('itemName').value = li.innerText;
+              document.getElementById('addItemBtn').click();
+            });
+            suggestionsList.appendChild(li);
+          });
+      }
+
+    }
+
+    // update quantity
+
+    const updateQuantity = (id, updateType) => {
+      var qtyInput = document.getElementById(`itemQuantity-${id}`);
+      var qtyValue = parseInt(qtyInput.value);
+      if (updateType) {
+        if (updateType == 'increment') {
+          qtyValue++;
+        }
+        else if (updateType == 'decrement' && qtyValue > 1) {
+          qtyValue--;
+        }
+      }
+      qtyInput.value = qtyValue;
+      itemsList[id].itemQuantity = qtyValue;
+      getTotalQuantity();
+    }
+
+    // clear list
+
+    const clearList = () => {
+      if (!confirm('Do you really want to delete this item?')) {
+        return;
+      }
+      itemsList = [];
+      showAlert('All items deleted successfully', 'danger');
+      clearAlert();
+      renderData();
+    }
+
+    // delete item
+
+    const deleteItem = id => {
+      itemsList.splice(id, 1);
+      showAlert('Item deleted successfully', 'danger');
+      clearAlert();
+      renderData();
+    }
+
+    // calculate total quantity
+
+    const getTotalQuantity = () => {
+      totalQuantity.innerHTML = itemsList.reduce((total, item) => total + parseInt(item.itemQuantity), 0);
+    }
+
+    // show alert messages
+
+    const showAlert = (message, type) => {
+      const alert = document.createElement('div');
+      alert.className = `alert alert-${type} py-3 fade show`;
+      alert.innerHTML = message;
+
+      document.getElementById('alertContainer').appendChild(alert);
+    };
+
+    // clear alert messages
+
+    const clearAlert = () => {
+      document.querySelectorAll('#alertContainer .alert').forEach((alert, index) => {
+        setTimeout(() => {
+          alert.remove();
+        }, (index + 1) * 3000);
+      });
+    };
+
+    // theme toggle
+
+    document.getElementById('toggleTheme').addEventListener('click', () => {
+      let htmlElement = document.documentElement;
+
+      if (htmlElement.getAttribute('data-mdb-theme') == 'light') {
+        htmlElement.setAttribute('data-mdb-theme', 'dark');
+        document.getElementById('toggleTheme').innerHTML = '<i class="fa fa-sun fa-xl"></i>';
+      }
+      else {
+        htmlElement.setAttribute('data-mdb-theme', 'light');
+        document.getElementById('toggleTheme').innerHTML = '<i class="fa fa-moon fa-xl"></i>';
+      }
+    });
+
+    // rendering data
+
+    const renderData = () => {
+      if (itemsList.length === 0) {
+        console.log('no item');
+        groceryItemsList.innerHTML =
+          `<div class="card">
+            <div class="card-body p-4">
+              <p class="lead mb-0 text-center">No item found</p>
+            </div>
+          </div>`;
+        document.getElementById('clearList').classList.add('d-none');
+        totalItems.innerText = 0;
+        totalQuantity.innerText = 0;
+        return;
+      }
+      else {
+        if (document.getElementById('clearList').classList.contains('d-none')) {
+          document.getElementById('clearList').classList.remove('d-none');
+        }
+        groceryItemsList.innerHTML = '';
+        totalItems.innerText = itemsList.length;
+        getTotalQuantity();
+        itemsList.forEach((item, key) => {
+
+          groceryItemsList.innerHTML +=
+            `<div class="card rounded-3 mb-4">
+        <div class="card-body p-4">
+          <div class="row d-flex justify-content-between align-items-center">
+
+            <div class="col-md-7">
+              <h6 class="fw-normal mb-0">${item.itemName}</h6>
+            </div>
+            <div class="col-md-4 d-flex">
+              <button data-mdb-button-init data-mdb-ripple-init class="btn btn-link px-2" id="qtyDecreaseBtn"
+                onclick="updateQuantity(${key}, 'decrement')">
+                <i class="fas fa-minus"></i>
+              </button>
+
+              <input id="itemQuantity-${key}" min="1" name="itemQuantity-${key}" value="${item.itemQuantity}" type="number"
+                class="form-control text-center" onchange="updateQuantity(${key})"/>
+
+              <button data-mdb-button-init data-mdb-ripple-init class="btn btn-link px-2" id="qtyIncreaseBtn"
+                onclick="updateQuantity(${key}, 'increment')">
+                <i class="fas fa-plus"></i>
+              </button>
+            </div>
+            <div class="col-md-1 text-end">
+              <button class="btn btn-link p-0 text-danger" onclick="deleteItem(${key})"><i class="fas fa-trash fa-xl"></i></button>
+            </div>
+          </div>
+        </div>
+      </div>`;
+
+        });
+      }
+    }
+
+
+
+  </script>
+
+
+  <!-- MDB Script -->
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mdb-ui-kit/9.2.0/mdb.umd.min.js"></script>
 </body>
+
 </html>
