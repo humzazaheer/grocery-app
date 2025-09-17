@@ -56,8 +56,8 @@
               <span class="small text-muted me-2">Total Quantity:</span> <span class="small fw-normal"
                 id="totalQuantity">0</span>
             </p>
-            <button class="btn btn-danger d-none" id="clearList" onclick="clearList()"
-              data-mdb-ripple-init>Clear list</button>
+            <button class="btn btn-danger d-none" id="clearList" onclick="clearList()" data-mdb-ripple-init>Clear
+              list</button>
           </div>
         </div>
       </div>
@@ -91,7 +91,7 @@
 
     var itemsList = localStorage.getItem(LIST_NAME) ? JSON.parse(localStorage.getItem(LIST_NAME)) : [];
 
-    
+
 
     // form submit event
 
@@ -225,7 +225,7 @@
 
     const renderData = () => {
       if (itemsList.length === 0) {
-        
+
         groceryItemsList.innerHTML =
           `<div class="card">
             <div class="card-body p-4">
@@ -278,7 +278,7 @@
         });
       }
     }
-renderData();
+    renderData();
 
 
   </script>
