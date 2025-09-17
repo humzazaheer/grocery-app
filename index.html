@@ -80,6 +80,8 @@
   <!-- javascript -->
   <script>
 
+    var LIST_NAME = 'grocery-list'
+
     var groceryForm = document.getElementById('groceryForm');
     var groceryItemsList = document.getElementById('groceryItemsList');
     var totalQuantity = document.getElementById('totalQuantity');
@@ -87,7 +89,9 @@
     var suggestionsList = document.getElementById('suggestions');
 
 
-    var itemsList = [];
+    var itemsList = localStorage.getItem(LIST_NAME) ? JSON.parse(localStorage.getItem(LIST_NAME)) : [];
+
+    
 
     // form submit event
 
@@ -109,6 +113,7 @@
       groceryForm.reset();
       suggestionsList.innerHTML = '';
       clearAlert();
+      localStorage.setItem(LIST_NAME, JSON.stringify(itemsList));
     });
 
     // render suggestions
@@ -149,6 +154,7 @@
       qtyInput.value = qtyValue;
       itemsList[id].itemQuantity = qtyValue;
       getTotalQuantity();
+      localStorage.setItem(LIST_NAME, JSON.stringify(itemsList));
     }
 
     // clear list
@@ -158,6 +164,7 @@
         return;
       }
       itemsList = [];
+      localStorage.setItem(LIST_NAME, JSON.stringify(itemsList));
       showAlert('All items deleted successfully', 'danger');
       clearAlert();
       renderData();
@@ -169,6 +176,7 @@
       itemsList.splice(id, 1);
       showAlert('Item deleted successfully', 'danger');
       clearAlert();
+      localStorage.setItem(LIST_NAME, JSON.stringify(itemsList));
       renderData();
     }
 
@@ -217,7 +225,7 @@
 
     const renderData = () => {
       if (itemsList.length === 0) {
-        console.log('no item');
+        
         groceryItemsList.innerHTML =
           `<div class="card">
             <div class="card-body p-4">
@@ -270,7 +278,7 @@
         });
       }
     }
-
+renderData();
 
 
   </script>
